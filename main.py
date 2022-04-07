@@ -39,13 +39,16 @@ class SIRModel:
 
     def calculate_curve(self, t, beta, gamma):
         """
-        Calculate model at given value(s), given parameters
+        Calculate infected curve at given value(s), given parameters
         :param t: int
         :param beta: float
         :param gamma: float
         :return:
         """
         return integrate.odeint(self.model, (self.S0, self.I0, self.R0), t, args=(beta, gamma))[:, 1]
+
+    def calculate_model(self, t, beta, gamma):
+        return integrate.odeint(self.model, (self.S0, self.I0, self.R0), t, args=(beta, gamma))
 
     def calculate_error(self, fitted):
         """
@@ -64,12 +67,20 @@ class SIRModel:
         :return:
         """
         popt, pcov = optimize.curve_fit(self.calculate_curve, self.t, self.y)
-        fitted = self.calculate_curve(self.t, *popt)
-
+        # Parameters are stored in array popt
+        fitted_model = self.calculate_model(self.t, *popt)
+        # Plot infected data points
         plt.plot(self.t, self.y, 'o')
-        plt.plot(self.t, fitted, 'g')
-        plt.plot(self.t, self.calculate_error(fitted), 'r')
-        plt.title(rf"Curve with parameters $\beta = {popt[0]}$ and $\gamma = {popt[1]}$")
+
+        # Susceptible
+        plt.plot(self.t, fitted_model[:,0], 'b')
+        # Infected
+        plt.plot(self.t, fitted_model[:, 1], 'r')
+
+        # Recovered
+        plt.plot(self.t, fitted_model[:, 2], 'g')
+
+        plt.title(rf"SIR Model with $\beta = {popt[0]}$, $\gamma = {popt[1]}$")
 
         plt.show()
 
@@ -77,5 +88,5 @@ class SIRModel:
 # Driver code
 y_driver = [1, 4, 8, 22, 34, 58]
 t_driver = [0, 1, 2, 3, 4, 5]
-sir_model = SIRModel(10, 25, 20000, y_driver, t_driver)
+sir_model = SIRModel(10, 25, 300, y_driver, t_driver)
 sir_model.fit()
