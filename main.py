@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy
 from scipy import integrate, optimize
 
+# Render LaTeX in plt
+plt.rcParams['text.usetex'] = True
+
 
 # https://stackoverflow.com/questions/34422410/fitting-sir-model-based-on-least-squares
 
@@ -18,7 +21,6 @@ class SIRModel:
         self.I0 = y_data[0]
         self.S0 = population
         self.R0 = 0.00
-        pass
 
     def model(self, y, t, beta, gamma):
         """
@@ -45,6 +47,17 @@ class SIRModel:
         """
         return integrate.odeint(self.model, (self.S0, self.I0, self.R0), t, args=(beta, gamma))[:, 1]
 
+    def calculate_error(self, fitted):
+        """
+        Calculate error between fitted model and data points at each interval
+        :param fitted: numpy.array
+        :return:
+        """
+        error = []
+        for i in range(len(fitted)):
+            error.append(abs(fitted[i] - self.y[i]))
+        return error
+
     def fit(self):
         """
         Find least squares best fit of parameters and plot
@@ -54,13 +67,15 @@ class SIRModel:
         fitted = self.calculate_curve(self.t, *popt)
 
         plt.plot(self.t, self.y, 'o')
-        plt.plot(self.t, fitted)
-        plt.title(f"Curve with parameters $beta = {popt[0]}$ and $gamma = {popt[1]}$")
+        plt.plot(self.t, fitted, 'g')
+        plt.plot(self.t, self.calculate_error(fitted), 'r')
+        plt.title(rf"Curve with parameters $\beta = {popt[0]}$ and $\gamma = {popt[1]}$")
+
         plt.show()
 
 
 # Driver code
-y_driver = [1, 2, 6, 7, 8, 14]
+y_driver = [1, 4, 8, 22, 34, 58]
 t_driver = [0, 1, 2, 3, 4, 5]
 sir_model = SIRModel(10, 25, 20000, y_driver, t_driver)
 sir_model.fit()
