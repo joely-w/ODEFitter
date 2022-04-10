@@ -1,3 +1,5 @@
+import csv
+
 import matplotlib.pyplot as plt
 import numpy
 from scipy import integrate, optimize
@@ -73,7 +75,7 @@ class SIRModel:
         plt.plot(self.t, self.y, 'o')
 
         # Susceptible
-        plt.plot(self.t, fitted_model[:,0], 'b')
+        plt.plot(self.t, fitted_model[:, 0], 'b')
         # Infected
         plt.plot(self.t, fitted_model[:, 1], 'r')
 
@@ -81,12 +83,29 @@ class SIRModel:
         plt.plot(self.t, fitted_model[:, 2], 'g')
 
         plt.title(rf"SIR Model with $\beta = {popt[0]}$, $\gamma = {popt[1]}$")
-
+        plt.ylim(0, max(fitted_model[:, 2]))
+        print("Parameters estimated at: ")
+        print(f"Beta = {str(popt[0])}, Gamma = {str(popt[1])}")
         plt.show()
 
 
-# Driver code
-y_driver = [1, 4, 8, 22, 34, 58]
-t_driver = [0, 1, 2, 3, 4, 5]
-sir_model = SIRModel(10, 25, 300, y_driver, t_driver)
-sir_model.fit()
+def driver(filepath):
+    with open(filepath) as csv_file:
+        print("Loading data...")
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        population = float(next(csv_reader)[0])
+        births_per_day = float(next(csv_reader)[0])
+        deaths_per_day = float(next(csv_reader)[0])
+        csv_y = []
+        csv_t = []
+        for row in csv_reader:
+            csv_t.append(int(row[0]))
+            csv_y.append(float(row[1]))
+        print("Data loaded!")
+        sir = SIRModel(daily_deaths=deaths_per_day, daily_births=births_per_day,
+                       population=population, y_data=csv_y, t_data=csv_t)
+        print("Fitting dataset to model...")
+        sir.fit()
+
+
+driver('./datasets/sars/processed_sars.csv')
